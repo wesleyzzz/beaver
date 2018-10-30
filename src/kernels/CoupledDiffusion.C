@@ -18,6 +18,7 @@ validParams<CoupledDiffusion>()
   InputParameters params = validParams<Diffusion>();
   params.addRequiredParam<MaterialPropertyName>(
       "mat_coef", "Property name of the coefficient of the kernel");
+  params.addParam<Real>("const_coef",1.0,"const coefficient to multiple with");
   params.addParam<MaterialPropertyName>(
       "dmat_coef_dvar","mat_derivative", "Property name of the derivative of the coefficient of the kernel");
   return params;
@@ -26,7 +27,8 @@ validParams<CoupledDiffusion>()
 CoupledDiffusion::CoupledDiffusion(const InputParameters & parameters)
   : Diffusion(parameters),
     _D(getMaterialProperty<Real>("mat_coef")),
-    _dD_dvar(hasMaterialProperty<Real>("dmat_coef_dvar")?&getMaterialProperty<Real>("dmat_coef_dvar"):NULL)
+    _dD_dvar(hasMaterialProperty<Real>("dmat_coef_dvar")?&getMaterialProperty<Real>("dmat_coef_dvar"):NULL),
+    _coef(getParam<Real>("const_coef"))
 {
 }
 
@@ -34,13 +36,13 @@ CoupledDiffusion::CoupledDiffusion(const InputParameters & parameters)
 Real
 CoupledDiffusion::computeQpResidual()
 {
-  return _D[_qp] * Diffusion::computeQpResidual();
+  return _coef * _D[_qp] * Diffusion::computeQpResidual();
 }
 
 Real
 CoupledDiffusion::computeQpJacobian()
 {
-  Real jac = _D[_qp] * Diffusion::computeQpJacobian();
+  Real jac = _coef * _D[_qp] * Diffusion::computeQpJacobian();
   if (_dD_dvar) 
     jac += (*_dD_dvar)[_qp] * _phi[_j][_qp] * Diffusion::computeQpResidual();
   return  jac; 

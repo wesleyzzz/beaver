@@ -38,16 +38,12 @@ protected:
 
   const Real _T;
   const Real _Omega;
-  const Real _kappa;
+  const Real _lattice;
 
-  MaterialProperty<Real> & _Dv;
-  MaterialProperty<Real> & _Di;
-  MaterialProperty<Real> & _DA;
-  MaterialProperty<Real> & _DAkappa;
-  MaterialProperty<Real> & _coef_v0A1;
-  MaterialProperty<Real> & _coef_i0A1;
-  MaterialProperty<Real> & _coef_v1A0;
-  MaterialProperty<Real> & _coef_i1A0;
+  MaterialProperty<Real> & _coef_dAv;
+  MaterialProperty<Real> & _coef_dBv;
+  MaterialProperty<Real> & _coef_dAi;
+  MaterialProperty<Real> & _coef_dBi;
   MaterialProperty<Real> & _Kvi;
 };
 

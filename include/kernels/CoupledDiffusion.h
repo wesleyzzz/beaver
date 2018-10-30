@@ -31,7 +31,7 @@ protected:
 
   const MaterialProperty<Real> & _D;
   const MaterialProperty<Real> * const _dD_dvar;
-
+  const Real _coef;
 };
 
 #endif // COUPLEDDIFFUSION_H

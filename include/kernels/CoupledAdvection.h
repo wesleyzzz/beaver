@@ -33,6 +33,7 @@ protected:
   const unsigned int _var;
 
   const MaterialProperty<Real> & _coef_coupled;
+  const Real _coef;
 };
 
 #endif // COUPLEDADVECTION_H

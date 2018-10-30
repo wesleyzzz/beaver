@@ -19,6 +19,7 @@ validParams<CoupledAdvection>()
 {
   InputParameters params = validParams<Kernel>();
   params.addRequiredCoupledVar("v", "Concentration of another variable");
+  params.addParam<Real>("const_coef",1.0,"const coefficient to multiple with");
   params.addRequiredParam<MaterialPropertyName>(
       "mat_coef", "Property name of the coefficient of the kernel");
   return params;
@@ -28,7 +29,8 @@ CoupledAdvection::CoupledAdvection(const InputParameters & parameters)
   : Kernel(parameters),
     _grad_var(coupledGradient("v")),
     _var(coupled("v")),
-    _coef_coupled(getMaterialProperty<Real>("mat_coef"))//-(dAv-dBv)*kappa*Omega
+    _coef_coupled(getMaterialProperty<Real>("mat_coef")),//-(dAv-dBv)*kappa*Omega
+    _coef(getParam<Real>("const_coef"))
 {
 }
 
@@ -36,13 +38,13 @@ CoupledAdvection::CoupledAdvection(const InputParameters & parameters)
 Real
 CoupledAdvection::computeQpResidual()
 {
-  return _coef_coupled[_qp] * _u[_qp] * _grad_var[_qp] * _grad_test[_i][_qp];
+  return _coef * _coef_coupled[_qp] * _u[_qp] * _grad_var[_qp] * _grad_test[_i][_qp];
 }
 
 Real
 CoupledAdvection::computeQpJacobian()
 {
-  return _coef_coupled[_qp] * _phi[_j][_qp] * _grad_var[_qp] * _grad_test[_i][_qp];
+  return _coef * _coef_coupled[_qp] * _phi[_j][_qp] * _grad_var[_qp] * _grad_test[_i][_qp];
 }
 
 Real

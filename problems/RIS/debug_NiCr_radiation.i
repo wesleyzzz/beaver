@@ -1,19 +1,20 @@
 ############# model NiCr alloy corrosion in molten salt ############3
 ###CA: Ni; CB: Cr###########
+###Unit: micron
 
 [Mesh]
   type = GeneratedMesh
   dim = 1
   xmin = 0
   xmax = 25
-  nx = 20
+  nx = 50
 []
 
 [Variables]
   [./Cv]
     order = FIRST
     family = LAGRANGE
-    initial_condition = 0.0
+    initial_condition = 1000.0
   [../]
   [./Ci]
     order = FIRST
@@ -23,6 +24,7 @@
   [./CA]
     order = FIRST
     family = LAGRANGE
+    scaling = 1.0e-4
     initial_condition = 7.2e10
   [../]
 []
@@ -155,7 +157,16 @@
   [../]
 []
 
+[Functions]
+  [./dose_rate]
+    type = ParsedFunction
+    value = 1.0e-5+x*1.0e-6
+  [../]
+[]
+
+
 [BCs]
+  active = 'Ci_left Ci_right Cv_left Cv_right CA_right'
   [./Ci_left]
     type = DirichletBC
     variable = Ci
@@ -173,7 +184,7 @@
     type = DirichletBC
     variable = Cv
     boundary = 'left'
-    value = 0
+    value = 1000.0
   [../]
   [./Cv_right]
     type = DirichletBC
@@ -183,16 +194,16 @@
   [../]
 
   [./CA_left]
-    type = DirichletBC 
+    type = NeumannBC 
     variable = CA
     boundary = 'left'
-    value = 7.2e10
+    value = 0 #7.2e10
   [../]
   [./CA_right]
     type = CoupledConvectiveFlux
     variable = CA
     boundary = 'right'
-    coefficient = 0.0 #1.0e-5
+    coefficient = 1.0
     C_infinity = CA_salt
   [../]
 []
@@ -203,9 +214,19 @@
     Cv = Cv
     Ci = Ci
     CA = CA
-    temperature = 300 #K
-    dose_rate = 1.0e-4 #dpa/s
+    temperature = 700 #K
+    #dose_rate = 1.0e-4 #dpa/s
+    dose_rate_function = dose_rate 
+    debug_mode = false
   [../]
+[]
+
+[Debug]
+  show_material_props     = 1       # Print out the material properties supplied for each block, face, neighbor,
+  show_top_residuals      = 1       # The number of top residuals to print out (0 = no output)
+  show_var_residual       = CA       # Variables for which residuals will be sent to the output file
+  show_var_residual_norms = 1       # Print the residual norms of the individual solution variables at each
+                                    # nonlinear iteration
 []
 
 [Executioner]
@@ -215,14 +236,13 @@
   #petsc_options =  '-snes_mf_operator'
   petsc_options_iname =  '-pc_type -pc_hypre_type -ksp_gmres_restart'
   petsc_options_value =  'hypre    boomeramg  51'
-  dt = 1.0e-9
+  #dt = 1.0e-9
   start_time = 0
-  num_steps = 10
-  l_max_its =  100
+  num_steps = 30
+  l_max_its =  50
   nl_max_its =  30
   nl_abs_tol=  1e-5
   dtmin = 1.0e-10
-  active = ''
   [./TimeStepper]
       cutback_factor = 0.4
       dt = 1e-8

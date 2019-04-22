@@ -16,6 +16,7 @@ validParams<VacancyInterstitialReaction>()
 {
   InputParameters params = validParams<Kernel>();
   params.addCoupledVar("v", "The other variable to multiple with");
+  params.addParam<Real>("value",1.0,"coefficient to multiply");
   params.addRequiredParam<MaterialPropertyName>(
       "mat_coef", "Property name of the coefficient of the kernel");
   return params;
@@ -23,6 +24,7 @@ validParams<VacancyInterstitialReaction>()
 
 VacancyInterstitialReaction::VacancyInterstitialReaction(const InputParameters & parameters)
   : Kernel(parameters),
+    _scale(getParam<Real>("value")),
     _C(coupledValue("v")),
     _C_var(coupled("v")),
     _Kvi(getMaterialProperty<Real>("mat_coef"))
@@ -33,13 +35,13 @@ VacancyInterstitialReaction::VacancyInterstitialReaction(const InputParameters &
 Real
 VacancyInterstitialReaction::computeQpResidual()
 {
-  return _Kvi[_qp] * _C[_qp] * _u[_qp] * _test[_i][_qp];
+  return _scale * _Kvi[_qp] * _C[_qp] * _u[_qp] * _test[_i][_qp];
 }
 
 Real
 VacancyInterstitialReaction::computeQpJacobian()
 {
-  return _Kvi[_qp] * _C[_qp] * _phi[_j][_qp] * _test[_i][_qp];
+  return _scale * _Kvi[_qp] * _C[_qp] * _phi[_j][_qp] * _test[_i][_qp];
 }
 
 Real

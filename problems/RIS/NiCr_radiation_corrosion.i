@@ -1,13 +1,12 @@
-############# model NiCr alloy corrosion in molten salt ############3
-###CA: Ni; CB: Cr###########
+############# model NiCr alloy corrosion in molten salt ############
+###CA: Cr; CB: Ni###########
 ###Unit: micron
 
-# debug: the gradient of A atom is zero
 [Mesh]
   type = GeneratedMesh
   dim = 1
   xmin = 0
-  xmax = 5
+  xmax = 0.01
   nx = 1000
 []
 
@@ -28,6 +27,12 @@
     #scaling = 1.0e-10
     initial_condition = 17857142857  # 0.2 fraction
   [../]
+  [./CB]
+    order = FIRST
+    family = LAGRANGE
+    #scaling = 1.0e-10
+    initial_condition = 71428571428 # 0.8 fraction
+  [../]
 []
 
 [AuxVariables]
@@ -42,6 +47,10 @@
     family = MONOMIAL
   [../]
   [./DA]
+    order = CONSTANT
+    family = MONOMIAL
+  [../]
+  [./DB]
     order = CONSTANT
     family = MONOMIAL
   [../]
@@ -60,6 +69,7 @@
 []
 
 [Kernels]
+  ########### vacancy #############
   [./Cv_dt]
     type = TimeDerivative 
     variable = Cv
@@ -74,9 +84,9 @@
   [./Cv_vB]
     type = CoupledAdvection
     variable = Cv
-    v = CA
+    v = CB
     mat_coef = dBvOmega
-    const_coef = 1.0
+    const_coef = -1.0
   [../]
   [./Cv_Jv]
     type = CoupledDiffusion
@@ -96,6 +106,7 @@
     value = 1.0
   [../]
 
+  ########### interstitial #############
   [./Ci_dt]
     type = TimeDerivative 
     variable = Ci
@@ -110,9 +121,9 @@
   [./Ci_iB]
     type = CoupledAdvection
     variable = Ci
-    v = CA
+    v = CB
     mat_coef = dBiOmega
-    const_coef = -1.0 
+    const_coef = 1.0 
   [../]
   [./Ci_Ji]
     type = CoupledDiffusion
@@ -132,6 +143,7 @@
     value = 1.0
   [../]
 
+  ########### Cr #############
   [./CA_dt]
     type = TimeDerivative 
     variable = CA
@@ -154,6 +166,32 @@
     type = CoupledDiffusion
     variable = CA
     mat_coef = ElemADiffusivity
+    const_coef = 1.0 
+  [../] 
+
+  ########### Ni #############
+  [./CB_dt]
+    type = TimeDerivative 
+    variable = CB
+  [../]
+  [./CB_iB]
+    type = CoupledAdvection
+    variable = CB
+    v = Ci
+    mat_coef = dBiOmega
+    const_coef = 1.0
+  [../]
+  [./CB_vB]
+    type = CoupledAdvection
+    variable = CB
+    v = Cv
+    mat_coef = dBvOmega
+    const_coef = -1.0
+  [../]
+  [./CB_JB]
+    type = CoupledDiffusion
+    variable = CB
+    mat_coef = ElemBDiffusivity
     const_coef = 1.0 
   [../] 
 []
@@ -184,6 +222,11 @@
     variable = DA
     property = ElemADiffusivity
   [../]
+  [./DB]
+    type = MaterialRealAux
+    variable = DB
+    property = ElemBDiffusivity
+  [../]
   [./Xv]
     type = ParsedAux
     variable = Xv
@@ -205,8 +248,8 @@
   [./XB]
     type = ParsedAux
     variable = XB
-    args = 'CA'
-    function = '1.0-CA*1.12e-11'
+    args = 'CB'
+    function = 'CB*1.12e-11'
   [../]
 []
 
@@ -219,7 +262,7 @@
 
 
 [BCs]
-  active = 'Ci_left Ci_right Cv_left Cv_right CA_left CA_right'
+  active = 'Ci_left Ci_right Cv_left Cv_right CA_left CA_right CB_left CB_right'
   [./Ci_left]
     type = NeumannBC
     variable = Ci
@@ -245,6 +288,13 @@
     boundary = 'right'
     value = 1000.0
   [../]
+  [./Cv_right2]
+    type = CoupledDirichletBC
+    variable = Cv
+    v = 'CA CB'
+    boundary = 'right'
+    value = 89285714290.0
+  [../]
   [./CA_left]
     type = NeumannBC 
     variable = CA
@@ -258,6 +308,18 @@
     coefficient = 100
     C_infinity = CA_salt
   [../]
+  [./CB_left]
+    type = NeumannBC 
+    variable = CB
+    boundary = 'left'
+    value = 0.0
+  [../]
+  [./CB_right]
+    type = NeumannBC 
+    variable = CB
+    boundary = 'right'
+    value = 0.0
+  [../]
 []
 
 [Materials]
@@ -266,6 +328,7 @@
     Cv = Cv
     Ci = Ci
     CA = CA
+    CB = CB
     temperature = 700 #K
     #dose_rate = 1.0e-4 #dpa/s
     dose_rate_function = dose_rate 
@@ -285,21 +348,22 @@
   type = Transient
   #Preconditioned JFNK (default)
   solve_type = 'PJFNK'
-  #petsc_options =  '-snes_mf_operator'
+  petsc_options =  '-snes_mf_operator'
   petsc_options_iname =  '-pc_type -pc_hypre_type -ksp_gmres_restart'
   petsc_options_value =  'hypre    boomeramg  51'
-  #dt = 1.0e-9
+  #dt = 1.0e-8
   start_time = 0
   end_time = 18000
   dtmax = 100
-  num_steps = 500
+  num_steps = 100
   l_max_its =  50
   nl_max_its =  30
   #nl_abs_tol=  1e-5
+  #nl_rel_tol = 1.0e-8
   dtmin = 1.0e-10
   [./TimeStepper]
       cutback_factor = 0.4
-      dt = 1e-2
+      dt = 1e-4
       growth_factor = 2
       type = IterationAdaptiveDT
   [../]

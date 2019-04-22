@@ -14,6 +14,7 @@
 #include "DerivativeMaterialInterface.h"
 
 class RadiationNiCr;
+class Function;
 
 template <>
 InputParameters validParams<RadiationNiCr>();
@@ -35,8 +36,12 @@ protected:
   const VariableValue & _Cv;
   const VariableValue & _Ci;
   const VariableValue & _CA;
+  const VariableValue * _CB;
 
   const Real _T;
+  const Real _dose_rate;
+  Function & _dose_rate_function;
+  const bool _debug;
   const Real _Omega;
   const Real _lattice;
 
@@ -44,7 +49,12 @@ protected:
   MaterialProperty<Real> & _coef_dBv;
   MaterialProperty<Real> & _coef_dAi;
   MaterialProperty<Real> & _coef_dBi;
+  MaterialProperty<Real> & _Dv;
+  MaterialProperty<Real> & _Di;
+  MaterialProperty<Real> & _DA;
+  MaterialProperty<Real> & _DB;
   MaterialProperty<Real> & _Kvi;
+  MaterialProperty<Real> & _K0;
 };
 
 #endif // RADIATIONNICR_H

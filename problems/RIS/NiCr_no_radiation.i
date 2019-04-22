@@ -15,7 +15,7 @@
   [./Cv]
     order = FIRST
     family = LAGRANGE
-    initial_condition = 1000.0
+    initial_condition = 1000
   [../]
   [./Ci]
     order = FIRST
@@ -53,10 +53,6 @@
   [../]
   [./XB]
   [../]
-  [./K0]
-    order = CONSTANT
-    family = MONOMIAL
-  [../]
 []
 
 [Kernels]
@@ -64,92 +60,30 @@
     type = TimeDerivative 
     variable = Cv
   [../]
-  [./Cv_vA]
-    type = CoupledAdvection
-    variable = Cv
-    v = CA
-    mat_coef = dAvOmega
-    const_coef = -1.0
-  [../]
-  [./Cv_vB]
-    type = CoupledAdvection
-    variable = Cv
-    v = CA
-    mat_coef = dBvOmega
-    const_coef = 1.0
-  [../]
-  [./Cv_Jv]
-    type = CoupledDiffusion
-    variable = Cv
-    mat_coef = VacancyDiffusivity
-    const_coef = 1.0
-  [../]
-  [./Cv_K0]
-    type = DefectProductionRate
-    variable = Cv
-  [../]
-  [./Cv_R]
-    type = VacancyInterstitialReaction
-    variable = Cv
-    v = Ci
-    mat_coef = vi_reaction_rate 
-    value = 1.0
-  [../]
 
   [./Ci_dt]
     type = TimeDerivative 
     variable = Ci
-  [../]
-  [./Ci_iA]
-    type = CoupledAdvection
-    variable = Ci
-    v = CA
-    mat_coef = dAiOmega
-    const_coef = 1.0 
-  [../]
-  [./Ci_iB]
-    type = CoupledAdvection
-    variable = Ci
-    v = CA
-    mat_coef = dBiOmega
-    const_coef = -1.0 
-  [../]
-  [./Ci_Ji]
-    type = CoupledDiffusion
-    variable = Ci
-    mat_coef = InterstitialDiffusivity
-    const_coef = 1.0
-  [../]
-  [./Ci_K0]
-    type = DefectProductionRate
-    variable = Ci
-  [../]
-  [./Ci_R]
-    type = VacancyInterstitialReaction
-    variable = Ci
-    v = Cv
-    mat_coef = vi_reaction_rate 
-    value = 1.0
   [../]
 
   [./CA_dt]
     type = TimeDerivative 
     variable = CA
   [../]
-  [./CA_iA]
-    type = CoupledAdvection
-    variable = CA
-    v = Ci
-    mat_coef = dAiOmega
-    const_coef = 1.0
-  [../]
-  [./CA_vA]
-    type = CoupledAdvection
-    variable = CA
-    v = Cv
-    mat_coef = dAvOmega
-    const_coef = -1.0
-  [../]
+#  [./CA_iA]
+#    type = CoupledAdvection
+#    variable = CA
+#    v = Ci
+#    mat_coef = dAiOmega
+#    const_coef = 1.0
+#  [../]
+#  [./CA_vA]
+#    type = CoupledAdvection
+#    variable = CA
+#    v = Cv
+#    mat_coef = dAvOmega
+#    const_coef = -1.0
+#  [../]
   [./CA_JA]
     type = CoupledDiffusion
     variable = CA
@@ -163,11 +97,6 @@
     type = SaltSoluteConcentrationAux
     variable = CA_salt 
     solute_init = 0.0
-  [../]
-  [./K0]
-    type = MaterialRealAux
-    variable = K0
-    property = point_defect_rate
   [../]
   [./Di]
     type = MaterialRealAux
@@ -243,7 +172,7 @@
     type = DirichletBC
     variable = Cv
     boundary = 'right'
-    value = 1000.0
+    value = 1000
   [../]
   [./CA_left]
     type = NeumannBC 
@@ -251,11 +180,12 @@
     boundary = 'left'
     value = 0.0
   [../]
+
   [./CA_right]
     type = CoupledConvectiveFlux
     variable = CA
     boundary = 'right'
-    coefficient = 100
+    coefficient = 1e-3
     C_infinity = CA_salt
   [../]
 []

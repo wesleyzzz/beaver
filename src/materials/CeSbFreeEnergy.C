@@ -20,10 +20,10 @@ validParams<CeSbFreeEnergy>()
   params.addRequiredParam<MooseEnum>("stoi", stoi, "stoichiometric");
   params.addRequiredCoupledVar("c", "Concentration variable of Ce");
   params.addRequiredParam<Real>("temperature", "Temperature");
-  params.addParam<Real>("mass_unit_conversion",
-                        1.0364271410595204e-28,
-                        "Conversion factor to get the gas atom mass in [eV*s^2/Ang^2] (defaults "
-                        "to [eV*s^2/(Ang^2*u)])");
+  params.addParam<Real>("k",8.0e7,"J/mol, stoichiometric stabilizer");
+  params.addParam<Real>("unit_conversion",
+                         0.00029837208,
+                        "Conversion from J/mol to eV/nm^3");
   params.addParam<Real>("h",
                         4.135667662e-15,
                         "Planck constant - units need to be consistent with "
@@ -37,11 +37,13 @@ CeSbFreeEnergy::CeSbFreeEnergy(const InputParameters & parameters)
     _c("c"),//Ce concentration
     _stoi(getParam<MooseEnum>("stoi")),
     _T(getParam<Real>("temperature")),
-    _m(getParam<Real>("mass_unit_conversion"))
+    _k(getParam<Real>("k")),
+    _m(getParam<Real>("unit_conversion"))
 {
 
   
   Real R = 8.3144598;// gas constant  J/mol/K
+  Real g_offset = 0.0;//offset free energy to help converging issue
 
   if (_T<298.15)
     mooseError("Temperature should be higher than 298.15!");
@@ -60,6 +62,7 @@ CeSbFreeEnergy::CeSbFreeEnergy(const InputParameters & parameters)
   else if (_T<2000)
     G_Sb = -11738.83 + 169.485872*_T - 31.38*_T*log(_T) + 1.6168e27*pow(_T,-9);
 
+
   // Definition of the free energy for the expression builder
   EBFunction free_energy;
 
@@ -67,38 +70,36 @@ CeSbFreeEnergy::CeSbFreeEnergy(const InputParameters & parameters)
   {
     Real a = -3.0157345e5;
     Real b = 7.38640874e-1;
-    Real k = 8.0e7; //J/mol needed to be tuned
-    free_energy(_c) = 1.0/3*(2.0*G_Ce
+    free_energy(_c) = 1.0/3* _m * (g_offset + 2.0*G_Ce
                         + G_Sb 
-                        + a + b * _T + k * pow(_c - 2.0/3,2)); // last term to penalize any deviation from the intermetallic composition CeSb
+                        + a + b * _T + _k * pow(_c - 2.0/3,2)); // last term to penalize any deviation from the intermetallic composition CeSb
+    std::cout << "ce2sb const: " << _stoi << " " << 1.0/3* (g_offset+2.0*G_Ce + G_Sb + a + b * _T ) << std::endl;
   }
   else if (_stoi == "Ce4Sb3")
   {
     Real a = -8.23375293e5;
     Real b = -1.83498253e1;
-    Real k = 8.0e7; //J/mol needed to be tuned
-    free_energy(_c) = 1.0/7*(4.0*G_Ce
+    free_energy(_c) = 1.0/7* _m * (g_offset + 4.0*G_Ce
                         + 3.0*G_Sb
-                        + a + b * _T + k * pow(_c - 4.0/7,2)); // last term to penalize any deviation from the intermetallic composition CeSb
+                        + a + b * _T + _k * pow(_c - 4.0/7,2)); // last term to penalize any deviation from the intermetallic composition CeSb
+    std::cout << "ce4sb3 const: " << _stoi << " " << 1.0/7*(g_offset+4.0*G_Ce + 3.0*G_Sb + a + b * _T)  << std::endl;
   }
   else if (_stoi == "CeSb")
   {
     Real a = -2.55927469e5;
     Real b = -8.48454109;
-    Real k = 8.0e7; //J/mol needed to be tuned
-    free_energy(_c) = 1.0/2*(G_Ce
+    free_energy(_c) = 1.0/2* _m * (G_Ce
                         + G_Sb 
-                        + a + b * _T + k * pow(_c - 0.5,2)); // last term to penalize any deviation from the intermetallic composition CeSb
+                        + a + b * _T + _k * pow(_c - 0.5,2)); // last term to penalize any deviation from the intermetallic composition CeSb
 
   }
   else if (_stoi == "CeSb2")
   {
     Real a = -2.67537672e5;
     Real b = -1.89049169e1;
-    Real k = 8.0e7; //J/mol needed to be tuned
-    free_energy(_c) = 1.0/3*(G_Ce
+    free_energy(_c) = 1.0/3* _m * (G_Ce
                         + 2.0*G_Sb 
-                        + a + b * _T + k * pow(_c - 1.0/3,2)); // last term to penalize any deviation from the intermetallic composition CeSb
+                        + a + b * _T + _k * pow(_c - 1.0/3,2)); // last term to penalize any deviation from the intermetallic composition CeSb
 
   }
   else if (_stoi == "Liquid")
@@ -114,10 +115,11 @@ CeSbFreeEnergy::CeSbFreeEnergy(const InputParameters & parameters)
       G2 = 10579.47 + 134.231525 *_T - 30.5130752*_T*log(_T) + 7.748768e-3*pow(_T,2) - 3.003415e-6*pow(_T,3) + 100625/_T-1.7485e-20*pow(_T,7);
     else if (_T<2000)
       G2 = 8175.359 + 147.455986*_T - 31.38*_T*log(_T); 
-    free_energy(_c) = _c*G1 
+    free_energy(_c) =  _m * ( _c*G1 
                         + (1-_c)*G2
                         + R * _T * ((1.0-_c)*log(1.0-_c) + _c * log(_c))
-                        + (1.0-_c)*_c*((-1.30910371e5-1.43287294e2*_T) + (-1.61907843e4 + 1.87139283e1*_T)*(1.0-2*_c));// last term for excess free energy of liquid phase 
+                        + (1.0-_c)*_c*((-1.30910371e5-1.43287294e2*_T) + (-1.61907843e4 + 1.87139283e1*_T)*(1.0-2*_c)));// last term for excess free energy of liquid phase 
+    //std::cout << "liquid : " << G1 << " " << G2  << std::endl;
   }
   // Parse function for automatic differentiation
   functionParse(free_energy);

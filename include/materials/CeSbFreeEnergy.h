@@ -36,6 +36,7 @@ protected:
 
   /// unit conversion 
   const Real _T;
+  const Real _k;
   const Real _m;
 
 };

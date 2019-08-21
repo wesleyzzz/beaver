@@ -40,7 +40,7 @@ protected:
 
   const Real _T;
   const Real _dose_rate;
-  Function & _dose_rate_function;
+  const Function & _dose_rate_function;
   const bool _debug;
   const Real _Omega;
   const Real _lattice;

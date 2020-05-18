@@ -1,6 +1,6 @@
 # Revised from kks_example_noflux.i
 # Track Sb concentration
-# Ce4Sb3 left, Ce2Sb right
+# U4Sb3 left, USb right
 #
 [GlobalParams]
   k = '4e7'
@@ -33,8 +33,8 @@
   # order parameter
   # solute concentration
   # chemical potential
-  # Ce2Sb (right) phase solute concentration
-  # Ce4Sb3 (left) phase solute concentration
+  # USb (right) phase solute concentration
+  # U4Sb3 (left) phase solute concentration
   [eta]
     order = FIRST
     family = LAGRANGE
@@ -48,13 +48,13 @@
     family = LAGRANGE
   []
   [c_right]
-    # Sb concentration of Ce2Sb
+    # Sb concentration of USb
     order = FIRST
     family = LAGRANGE
-    initial_condition = '0.3333'
+    initial_condition = '0.5'
   []
   [c_left]
-    # Sb concentration of Ce4Sb3
+    # Sb concentration of U4Sb3
     order = FIRST
     family = LAGRANGE
     initial_condition = '0.4286'
@@ -68,7 +68,7 @@
   []
   [ic_func_c]
     type = ParsedFunction
-    value = '0.4286*(0.5*(1.0-tanh(x/sqrt(2.0))))^3*(6*(0.5*(1.0-tanh(x/sqrt(2.0))))^2-15*(0.5*(1.0-tanh(x/sqrt(2.0))))+10)+0.3333*(1-(0.5*(1.0-tanh(x/sqrt(2.0))))^3*(6*(0.5*(1.0-tanh(x/sqrt(2.0))))^2-15*(0.5*(1.0-tanh(x/sqrt(2.0))))+10))'
+    value = '0.4286*(0.5*(1.0-tanh(x/sqrt(2.0))))^3*(6*(0.5*(1.0-tanh(x/sqrt(2.0))))^2-15*(0.5*(1.0-tanh(x/sqrt(2.0))))+10)+0.5*(1-(0.5*(1.0-tanh(x/sqrt(2.0))))^3*(6*(0.5*(1.0-tanh(x/sqrt(2.0))))^2-15*(0.5*(1.0-tanh(x/sqrt(2.0))))+10))'
   []
 []
 
@@ -86,24 +86,24 @@
 []
 
 [Materials]
-  # Free energy of the Ce2Sb (right)
-  # Free energy of the Ce4Sb3 (left)
+  # Free energy of the USb (right)
+  # Free energy of the U4Sb3 (left)
   # h(eta)
   # g(eta)
   # constant properties
   [f_right]
-    # free energy of Ce2Sb
-    type = CeSbFreeEnergy1
+    # free energy of USb
+    type = USbFreeEnergy1
     f_name = f_right
-    stoi = Ce2Sb
-    c = 'c_right' # Sb concentration of Ce2Sb
+    stoi = USb
+    c = 'c_right' # Sb concentration of USb
   []
   [f_left]
-    # free energy of Ce4Sb3
-    type = CeSbFreeEnergy1
+    # free energy of U4Sb3
+    type = USbFreeEnergy1
     f_name = f_left
-    stoi = Ce4Sb3
-    c = 'c_left' # Sb concentration of Ce4Sb3
+    stoi = U4Sb3
+    c = 'c_left' # Sb concentration of U4Sb3
   []
   [h_eta]
     type = SwitchingFunctionMaterial
@@ -204,6 +204,11 @@
   nl_max_its = 100
   num_steps = 50
   dt = 0.1
+  automatic_scaling = true
+  inactive = 'TimeStepper'
+  [TimeStepper]
+    type = AB2PredictorCorrector
+  []
 []
 
 [Preconditioning]
